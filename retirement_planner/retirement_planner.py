@@ -2,6 +2,8 @@ import copy
 from datetime import datetime
 from tabulate import tabulate
 
+from common.variables import MAX_401K_AND_ROTH_CONTRIBUTION
+
 
 class RetirementPlanner:
     def __init__(self, *arg):
@@ -66,8 +68,19 @@ class RetirementPlanner:
         # Set annual contribution
         if num_of_years == 0:
             self.calculate_company_contribution(single_user_data)
-            self.annual_contribution = self.payday_contribution * \
-                                       self.convert_pay_schedule(single_user_data["pay_schedule"])
+
+            self.annual_contribution = self.payday_contribution * self.convert_pay_schedule(
+                single_user_data["pay_schedule"])
+
+        update = self.payday_contribution + (
+                    self.payday_contribution * (single_user_data["yearly_income_growth"] / 100))
+        self.payday_contribution = update
+
+        if self.annual_contribution + update >= MAX_401K_AND_ROTH_CONTRIBUTION and "BROKERAGE" not in single_user_data[
+            "name"].upper():
+            self.annual_contribution = MAX_401K_AND_ROTH_CONTRIBUTION
+        else:
+            self.annual_contribution += update
 
         self.total_contribution += self.annual_contribution + self.total_company_contributions
         return self.annual_contribution
@@ -139,6 +152,7 @@ if __name__ == "__main__":
         {
             "name": "Dan",
             "age": 35,
+            "yearly_income_growth": 5,
             "starting_amount": 40977.20,
             "company_match": 3450,
             "company_match_pay_schedule": "ANNUALLY",
@@ -150,6 +164,7 @@ if __name__ == "__main__":
         {
             "name": "Lara",
             "age": 33,
+            "yearly_income_growth": 2,
             "starting_amount": 5005,
             "company_match": 10.60,
             "company_match_pay_schedule": "BI-WEEKLY",
@@ -161,6 +176,7 @@ if __name__ == "__main__":
         {
             "name": "Joint Savings",
             "age": 35,
+            "yearly_income_growth": 0,
             "company_match": 0,
             "company_match_pay_schedule": "ANNUALLY",
             "starting_amount": 15000,
@@ -172,6 +188,7 @@ if __name__ == "__main__":
         {
             "name": "Joint Brokerage",
             "age": 35,
+            "yearly_income_growth": 5,
             "company_match": 750.00, # From 5% High performance savings every year
             "company_match_pay_schedule": "ANNUALLY",
             "starting_amount": 3207.45,
